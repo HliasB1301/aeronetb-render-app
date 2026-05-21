@@ -55,17 +55,53 @@ async function audit(empId, actionType, entityType, entityId, outcome='Success')
 
 app.get('/api/health', async (req,res)=> res.json({ status:'OK', app:'AeroNetB ASCM Dashboard' }));
 
-app.post('/api/login', async (req,res)=>{
-  const { email, password } = req.body;
-  const result = await pool.query('SELECT u.emp_id, u.full_name, u.email, u.password_hash, r.role_name FROM users u JOIN roles r ON u.role_id=r.role_id WHERE u.email=$1', [email]);
-  if (!result.rows.length) return res.status(401).json({ error:'Invalid login' });
-  const user = result.rows[0];
-  if (password !== 'password123') {
-  return res.status(401).json({ error: 'Invalid login' });
-}
-  const token = jwt.sign({ empId:user.emp_id, name:user.full_name, role:user.role_name }, JWT_SECRET, { expiresIn:'8h' });
-  await audit(user.emp_id, 'LOGIN', 'USER', user.emp_id);
-  res.json({ token, user:{ empId:user.emp_id, name:user.full_name, role:user.role_name }});
+app.post('/api/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const result = await pool.query(
+      `SELECT u.emp_id, u.full_name, u.email, r.role_name
+       FROM users u
+       JOIN roles r ON u.role_id = r.role_id
+       WHERE u.email = $1`,
+      [email]
+    );
+
+    if (!result.rows.length) {
+      return res.status(401).json({ error: 'Invalid login' });
+    }
+
+    if (password !== 'password123') {
+      return res.status(401).json({ error: 'Invalid login' });
+    }
+
+    const user = result.rows[0];
+
+    const token = jwt.sign(
+      {
+        empId: user.emp_id,
+        name: user.full_name,
+        role: user.role_name
+      },
+      JWT_SECRET,
+      { expiresIn: '8h' }
+    );
+
+    await audit(user.emp_id, 'LOGIN', 'USER', user.emp_id);
+
+    res.json({
+      token,
+      user: {
+        empId: user.emp_id,
+        name: user.full_name,
+        role: user.role_name
+      }
+    });
+
+  } catch (err) {
+    console.error('LOGIN ERROR:', err);
+    res.status(500).json({ error: 'Login server error' });
+  }
 });
 
 app.get('/api/suppliers', auth, allow('Procurement Officer','Supply Chain Manager','Auditor'), async (req,res)=>{
