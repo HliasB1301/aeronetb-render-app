@@ -4,7 +4,8 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { Pool } = require('pg');
-const mongoose = require('mongoose');
+const mongoose = require('mongoose')
+
 
 const app = express();
 app.use(cors());
@@ -107,6 +108,12 @@ app.get('/api/audit-logs', auth, allow('Auditor'), async (req,res)=>{
   const r = await pool.query('SELECT * FROM audit_logs ORDER BY timestamp DESC LIMIT 100'); res.json(r.rows);
 });
 
-app.get('*', (req,res)=> res.sendFile(__dirname + '/public/index.html'));
+const path = require('path');
+
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 const port = process.env.PORT || 3000;
 app.listen(port, ()=> console.log(`AeroNetB app running on ${port}`));
