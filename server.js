@@ -4,8 +4,12 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { Pool } = require('pg');
+<<<<<<< HEAD
 const mongoose = require('mongoose')
 
+=======
+const mongoose = require('mongoose');
+>>>>>>> 678a8e5a3d6a327d5a380837780e61948f328075
 
 const app = express();
 app.use(cors());
